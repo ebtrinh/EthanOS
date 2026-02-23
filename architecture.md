@@ -1,7 +1,7 @@
 # EthanOS — Website Architecture Plan
 
 ## Overview
-A Personal Operating System website — a decision engine for your life. Modular, customizable categories (not hardcoded to any activity), responsive (phone/tablet/desktop), cloud-synced via PutPut.io.
+A Personal Operating System website — a decision engine for your life. Modular, customizable categories (not hardcoded to any activity), responsive (phone/tablet/desktop), cloud-synced via Supabase.
 
 ---
 
@@ -31,7 +31,7 @@ EthanOS/
 │   └── style.css           ← Single shared stylesheet (theme, components, responsive)
 │
 ├── js/
-│   ├── data.js             ← PutPut.io data layer (cloud sync + localStorage cache)
+│   ├── data.js             ← Supabase data layer (cloud sync + localStorage cache)
 │   ├── shared.js           ← Shared nav, helpers, sidebar, clock, modals, toasts
 │   ├── command-center.js   ← index.html logic
 │   ├── academic.js         ← academic.html logic
@@ -121,17 +121,16 @@ Every HTML page includes the same shell:
 - Utility classes
 - Animations
 
-### js/data.js — PutPut.io Integration
+### js/data.js — Supabase Integration
 - `EthanOSData` class on `window.EthanOSData`
-- **init()** — get/reuse guest token
-- **saveData(key, data)** — upload JSON as txt file (delete old first, then upload new)
-- **loadData(key, defaultValue)** — localStorage first, then fetch from PutPut.io
+- **init()** — create Supabase client, test connection, fall back to localStorage-only if offline
+- **saveData(key, data)** — upsert to Supabase `data_store` table + localStorage cache
+- **loadData(key, defaultValue)** — Supabase first (online), localStorage cache as fallback
 - **deleteData(key)** — remove from both
-- **syncAll()** — pull all cloud data into localStorage
+- **syncAll()** — pull all cloud rows into localStorage
 - **exportAll() / importAll(blob)** — backup/restore
-- Files stored as `ethanos_{key}.json` on PutPut.io
+- Supabase table: `data_store` with columns `key`, `value`, `updated_at`
 - localStorage keys: `ethanos_cache_{key}`
-- Token in: `ethanos_putput_token`
 
 ### js/shared.js — Common UI & Helpers
 - Injects sidebar nav + topbar into every page
@@ -147,7 +146,7 @@ Every HTML page includes the same shell:
 
 ---
 
-## Data Schema (stored as JSON via PutPut.io)
+## Data Schema (stored as JSON via Supabase)
 
 Each key below = one JSON file in the cloud:
 
@@ -394,7 +393,7 @@ User can add/edit/delete these freely in Settings. Every module adapts.
 
 ## Cross-Device Sync Flow
 
-1. First visit: auto-creates PutPut.io guest token, stores in localStorage
-2. All data writes: save to localStorage (instant) + upload to PutPut.io (background)
+1. First visit: initializes Supabase client, falls back to localStorage-only if offline
+2. All data writes: save to localStorage (instant) + upsert to Supabase (background)
 3. New device: enters token (or gets new one), hits "Sync" to pull cloud data
 4. Export/Import as JSON backup for manual transfer
