@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthanOS — Burnout Monitor</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="main-content" id="page-content">
+    <div class="page-header">
+      <h1 class="page-title">Burnout Monitor</h1>
+      <p class="page-subtitle">Stay aware of burnout risk factors before they become problems</p>
+    </div>
+
+    <!-- Risk Meter -->
+    <div class="card mb-3" id="risk-meter-card">
+      <div class="card-header">
+        <h2 class="card-title">Overall Burnout Risk</h2>
+      </div>
+      <div class="card-body" id="risk-meter"></div>
+    </div>
+
+    <!-- Factor Cards -->
+    <div class="grid-dashboard mb-3" id="factor-cards"></div>
+
+    <!-- Stress Trend Mini Chart -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h2 class="card-title">Stress Trend (7 days)</h2>
+      </div>
+      <div class="card-body" id="stress-mini-chart"></div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Smart Recommendations</h2>
+      </div>
+      <div class="card-body" id="recommendations"></div>
+    </div>
+  </main>
+  <div id="modal-root"></div>
+  <div id="toast-container"></div>
+  <script src="js/data.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/burnout.js"></script>
+</body>
+</html>

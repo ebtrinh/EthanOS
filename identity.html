@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthanOS — Identity System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="main-content" id="page-content">
+    <div class="page-header flex-between">
+      <div>
+        <h1 class="page-title">Identity System</h1>
+        <p class="page-subtitle">Define who you are becoming</p>
+      </div>
+      <button class="btn btn-primary" id="add-statement-btn">+ Add Statement</button>
+    </div>
+
+    <!-- Daily Spotlight -->
+    <div class="card card-glow mb-3" id="spotlight-card">
+      <div class="card-header">
+        <h2 class="card-title">Daily Spotlight</h2>
+      </div>
+      <div class="card-body" id="spotlight-content" style="text-align:center;padding:var(--space-xl)">
+        <p class="text-muted">Add identity statements to see your daily spotlight</p>
+      </div>
+    </div>
+
+    <!-- Statements List -->
+    <div id="statements-list" class="grid-dashboard"></div>
+  </main>
+  <div id="modal-root"></div>
+  <div id="toast-container"></div>
+  <script src="js/data.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/identity.js"></script>
+</body>
+</html>

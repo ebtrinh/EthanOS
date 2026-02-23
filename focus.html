@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthanOS — Focus Mode</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="main-content" id="page-content">
+    <div class="page-header">
+      <h1 class="page-title">Focus Mode</h1>
+      <p class="page-subtitle">Deep work, one session at a time</p>
+    </div>
+
+    <div class="grid-dashboard">
+      <!-- Timer Card -->
+      <div class="card span-full" style="text-align:center;">
+        <!-- Task Selector -->
+        <div class="flex justify-center gap-2 mb-3" style="flex-wrap:wrap">
+          <select id="focus-task-select" style="max-width:300px">
+            <option value="">Freeform Focus</option>
+          </select>
+          <select id="focus-category-select" style="max-width:200px"></select>
+        </div>
+
+        <!-- Why This Matters -->
+        <div id="why-matters" class="text-secondary text-sm mb-3" style="min-height:24px;"></div>
+
+        <!-- Big Timer -->
+        <div id="timer-display" style="font-size:5rem;font-weight:900;font-variant-numeric:tabular-nums;line-height:1;margin:var(--space-lg) 0;color:var(--accent);">
+          25:00
+        </div>
+
+        <!-- Controls -->
+        <div class="flex justify-center gap-2 mb-3">
+          <button class="btn btn-primary btn-lg" id="start-btn">Start</button>
+          <button class="btn btn-lg" id="pause-btn" disabled>Pause</button>
+          <button class="btn btn-danger btn-lg" id="stop-btn" disabled>Stop</button>
+        </div>
+
+        <!-- Session Duration Setting -->
+        <div class="flex justify-center gap-2 items-center text-sm text-secondary">
+          <span>Duration:</span>
+          <input type="number" id="session-duration" value="25" min="1" max="120" style="width:70px;text-align:center;">
+          <span>min</span>
+        </div>
+      </div>
+
+      <!-- Recent Sessions -->
+      <div class="card span-full">
+        <div class="card-header">
+          <h2 class="card-title">Recent Sessions</h2>
+          <span class="badge" id="session-count">0 sessions</span>
+        </div>
+        <div class="card-body" id="session-log">
+          <div class="empty-state">
+            <div class="empty-state-icon">&#128293;</div>
+            <div class="empty-state-title">No sessions yet</div>
+            <div class="empty-state-text">Start a focus session to log your work</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="modal-root"></div>
+  <div id="toast-container"></div>
+  <script src="js/data.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/focus.js"></script>
+</body>
+</html>

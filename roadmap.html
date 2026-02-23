@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthanOS — Roadmap</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="main-content" id="page-content">
+    <div class="page-header flex-between">
+      <div>
+        <h1 class="page-title">Roadmap</h1>
+        <p class="page-subtitle">Visualize your timeline of events, goals, and deadlines</p>
+      </div>
+      <button class="btn btn-primary" id="add-event-btn">+ Add Event</button>
+    </div>
+
+    <!-- Zoom Controls -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-sm text-secondary">Zoom:</span>
+      <div class="btn-group">
+        <button class="btn btn-sm" data-zoom="year">Year</button>
+        <button class="btn btn-sm" data-zoom="quarter">Quarter</button>
+        <button class="btn btn-sm" data-zoom="month">Month</button>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card" style="overflow-x:auto;padding:var(--space-md)">
+      <div id="timeline-container" style="position:relative;min-height:300px"></div>
+    </div>
+  </main>
+  <div id="modal-root"></div>
+  <div id="toast-container"></div>
+  <script src="js/data.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/roadmap.js"></script>
+</body>
+</html>

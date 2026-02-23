@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthanOS — Goal Engine</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="main-content" id="page-content">
+    <div class="page-header flex-between">
+      <div>
+        <h1 class="page-title">Goal Engine</h1>
+        <p class="page-subtitle">Track your long-term goals and milestones</p>
+      </div>
+      <button class="btn btn-primary" id="add-goal-btn">+ Add Goal</button>
+    </div>
+
+    <!-- Completion Calculator -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h2 class="card-title">Completion Calculator</h2>
+      </div>
+      <div class="card-body">
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="text-secondary">If I invest</span>
+          <input type="number" id="calc-hours" min="1" max="168" value="10" style="width:80px">
+          <span class="text-secondary">hrs/week, goal</span>
+          <select id="calc-goal" style="width:200px"></select>
+          <span class="text-secondary">finishes by</span>
+          <span class="font-bold text-accent" id="calc-result">--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goal Cards -->
+    <div class="grid-dashboard" id="goals-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">&#127919;</div>
+        <div class="empty-state-title">No goals yet</div>
+        <div class="empty-state-text">Click "Add Goal" to set your first goal</div>
+      </div>
+    </div>
+  </main>
+  <div id="modal-root"></div>
+  <div id="toast-container"></div>
+  <script src="js/data.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/goals.js"></script>
+</body>
+</html>

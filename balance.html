@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthanOS — Life Balance</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="main-content" id="page-content">
+    <div class="page-header">
+      <h1 class="page-title">Life Balance</h1>
+      <p class="page-subtitle">How well your actual time matches your targets</p>
+    </div>
+
+    <!-- Score + Donut Row -->
+    <div class="grid-2 mb-3">
+      <div class="card stat-card" id="balance-score-card">
+        <div class="stat-number accent" id="balance-score">--</div>
+        <div class="stat-label">Balance Score</div>
+        <div class="stat-sublabel">out of 100</div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;justify-content:center">
+        <div id="donut-chart" style="width:200px;height:200px;border-radius:50%;position:relative"></div>
+      </div>
+    </div>
+
+    <!-- Category Bars -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h2 class="card-title">Target vs Actual Hours (This Week)</h2>
+      </div>
+      <div class="card-body" id="balance-bars"></div>
+    </div>
+
+    <!-- Suggestions -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Suggestions</h2>
+      </div>
+      <div class="card-body" id="balance-suggestions"></div>
+    </div>
+  </main>
+  <div id="modal-root"></div>
+  <div id="toast-container"></div>
+  <script src="js/data.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/balance.js"></script>
+</body>
+</html>

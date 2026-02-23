@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthanOS — Energy & Mood</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="main-content" id="page-content">
+    <div class="page-header">
+      <h1 class="page-title">Energy & Mood</h1>
+      <p class="page-subtitle">Track your daily energy, stress, and sleep patterns</p>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid-stats mb-3" id="energy-stats"></div>
+
+    <!-- Check-in Form -->
+    <div class="card mb-3" id="checkin-card">
+      <div class="card-header">
+        <h2 class="card-title">Daily Check-in</h2>
+        <span class="badge" id="checkin-status"></span>
+      </div>
+      <div class="card-body" id="checkin-form-container"></div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid-2 mb-3">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Energy (14 days)</h2>
+        </div>
+        <div class="card-body" id="energy-chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Stress (14 days)</h2>
+        </div>
+        <div class="card-body" id="stress-chart"></div>
+      </div>
+    </div>
+
+    <!-- Sleep Trend -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <h2 class="card-title">Sleep Trend</h2>
+      </div>
+      <div class="card-body" id="sleep-chart"></div>
+    </div>
+
+    <!-- Insights -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Insights</h2>
+      </div>
+      <div class="card-body" id="insights-container"></div>
+    </div>
+  </main>
+  <div id="modal-root"></div>
+  <div id="toast-container"></div>
+  <script src="js/data.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/energy.js"></script>
+</body>
+</html>

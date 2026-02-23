@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthanOS — Command Center</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app-shell"></div>
+  <main class="main-content" id="page-content">
+    <div class="page-header">
+      <h1 class="page-title">Command Center</h1>
+      <p class="page-subtitle" id="greeting">Your day at a glance</p>
+    </div>
+
+    <!-- Top stats row -->
+    <div class="grid-stats mb-3">
+      <div class="card stat-card">
+        <div class="stat-number accent" id="current-time">--:--</div>
+        <div class="stat-label">Current Time</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-number success" id="free-time">--</div>
+        <div class="stat-label">Free Today</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-number warning" id="deadline-countdown">--</div>
+        <div class="stat-label">Next Deadline</div>
+        <div class="stat-sublabel" id="deadline-name"></div>
+      </div>
+    </div>
+
+    <div class="grid-dashboard">
+      <!-- Priority Tasks -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Priority Tasks</h2>
+          <span class="badge badge-info" id="task-count">0 tasks</span>
+        </div>
+        <div class="card-body" id="priority-tasks">
+          <div class="empty-state">
+            <div class="empty-state-icon">&#9989;</div>
+            <div class="empty-state-title">No tasks yet</div>
+            <div class="empty-state-text">Add tasks to see your priorities here</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Streak Tracker -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Streaks</h2>
+        </div>
+        <div class="card-body" id="streak-tracker">
+          <div class="empty-state">
+            <div class="empty-state-icon">&#128293;</div>
+            <div class="empty-state-title">No streaks yet</div>
+            <div class="empty-state-text">Complete focus sessions to build streaks</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Schedule Mini-Timeline -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Today's Schedule</h2>
+        </div>
+        <div class="card-body" id="mini-timeline">
+          <div class="empty-state">
+            <div class="empty-state-icon">&#128197;</div>
+            <div class="empty-state-title">Nothing scheduled</div>
+            <div class="empty-state-text">Add schedule items to see your day</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Add Task -->
+      <div class="card span-full">
+        <div class="card-header">
+          <h2 class="card-title">Quick Add Task</h2>
+        </div>
+        <div class="card-body">
+          <form id="quick-add-form" class="flex flex-wrap gap-2 items-center">
+            <div class="flex-1" style="min-width:180px">
+              <input type="text" id="qa-title" placeholder="Task title..." required>
+            </div>
+            <div style="min-width:140px">
+              <select id="qa-category"></select>
+            </div>
+            <div style="min-width:100px">
+              <select id="qa-difficulty">
+                <option value="1">1 Star</option>
+                <option value="2">2 Stars</option>
+                <option value="3" selected>3 Stars</option>
+                <option value="4">4 Stars</option>
+                <option value="5">5 Stars</option>
+              </select>
+            </div>
+            <div style="min-width:140px">
+              <input type="date" id="qa-due">
+            </div>
+            <div style="min-width:100px">
+              <input type="number" id="qa-minutes" placeholder="Est. min" min="1" max="600">
+            </div>
+            <button type="submit" class="btn btn-primary">Add Task</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="modal-root"></div>
+  <div id="toast-container"></div>
+  <script src="js/data.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/command-center.js"></script>
+</body>
+</html>
