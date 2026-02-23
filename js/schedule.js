@@ -3,6 +3,7 @@
  *
  * Full Google Calendar-style calendar with Month, Week, and Day views.
  * Navigation, add/edit/delete events via modal, category-colored events.
+ * Supports all-day and multi-day events.
  */
 
 (function () {
@@ -11,7 +12,7 @@
   /* ======================================================================
      STATE
      ====================================================================== */
-  var viewMode = 'month'; // 'month', 'week', 'day'
+  var viewMode = 'month';
   var currentDate = new Date();
   var schedule = [];
   var categories = [];
@@ -41,6 +42,10 @@
     return sameDay(d, new Date());
   }
 
+  function toDateStr(d) {
+    return d.getFullYear() + '-' + padTime(d.getMonth() + 1) + '-' + padTime(d.getDate());
+  }
+
   var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
                      'July', 'August', 'September', 'October', 'November', 'December'];
   var MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -48,22 +53,31 @@
   var DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   var DAY_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+  /* ---- Item query helpers ---- */
+
   function getItemsForDate(date) {
     var dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
-    var dateStr = date.getFullYear() + '-' + padTime(date.getMonth() + 1) + '-' + padTime(date.getDate());
+    var ds = toDateStr(date);
     var result = [];
 
     for (var i = 0; i < schedule.length; i++) {
       var item = schedule[i];
       if (item.recurring && item.days && item.days.indexOf(dayName) !== -1) {
         result.push(item);
-      } else if (item.startTime && item.startTime.indexOf(dateStr) === 0) {
+      } else if (item.allDay && item.startTime && item.endTime) {
+        var startD = item.startTime.split('T')[0];
+        var endD = item.endTime.split('T')[0];
+        if (ds >= startD && ds <= endD) {
+          result.push(item);
+        }
+      } else if (item.startTime && item.startTime.indexOf(ds) === 0) {
         result.push(item);
       }
     }
 
-    // Sort by start time
     result.sort(function (a, b) {
+      if (a.allDay && !b.allDay) return -1;
+      if (!a.allDay && b.allDay) return 1;
       var aTime = a.startTime ? a.startTime.split('T')[1] || '00:00' : '00:00';
       var bTime = b.startTime ? b.startTime.split('T')[1] || '00:00' : '00:00';
       return aTime < bTime ? -1 : aTime > bTime ? 1 : 0;
@@ -72,8 +86,17 @@
     return result;
   }
 
+  function getTimedItemsForDate(date) {
+    return getItemsForDate(date).filter(function (item) { return !item.allDay; });
+  }
+
+  function getAllDayItemsForDate(date) {
+    return getItemsForDate(date).filter(function (item) { return !!item.allDay; });
+  }
+
   function getItemTimes(item, date) {
     if (!item.startTime || !item.endTime) return null;
+    if (item.allDay) return null;
 
     if (item.recurring) {
       var sTime = item.startTime.split('T')[1] || '00:00:00';
@@ -101,10 +124,49 @@
   }
 
   function formatHourLabel(h) {
-    if (h === 0) return '12 AM';
+    if (h === 0 || h === 24) return '12 AM';
     if (h < 12) return h + ' AM';
     if (h === 12) return '12 PM';
     return (h - 12) + ' PM';
+  }
+
+  /* ---- 12-hour conversion helpers ---- */
+
+  function to12Hour(h24, m) {
+    var ampm = h24 >= 12 ? 'PM' : 'AM';
+    var h12 = h24 % 12;
+    if (h12 === 0) h12 = 12;
+    return { hour: h12, minute: m, ampm: ampm };
+  }
+
+  function to24Hour(h12, m, ampm) {
+    var h24 = h12;
+    if (ampm === 'AM') {
+      if (h12 === 12) h24 = 0;
+    } else {
+      if (h12 !== 12) h24 = h12 + 12;
+    }
+    return { hour: h24, minute: m };
+  }
+
+  function buildHourOptions(selected) {
+    var html = '';
+    for (var h = 1; h <= 12; h++) {
+      html += '<option value="' + h + '"' + (h === selected ? ' selected' : '') + '>' + h + '</option>';
+    }
+    return html;
+  }
+
+  function buildMinuteOptions(selected) {
+    var html = '';
+    for (var m = 0; m < 60; m += 5) {
+      html += '<option value="' + m + '"' + (m === selected ? ' selected' : '') + '>' + padTime(m) + '</option>';
+    }
+    return html;
+  }
+
+  function roundMinute(m) {
+    return Math.round(m / 5) * 5 % 60;
   }
 
   /* ======================================================================
@@ -123,30 +185,27 @@
      EVENTS
      ====================================================================== */
   function bindEvents() {
-    document.getElementById('cal-prev').addEventListener('click', function () {
-      navigate(-1);
-    });
-    document.getElementById('cal-next').addEventListener('click', function () {
-      navigate(1);
-    });
+    document.getElementById('cal-prev').addEventListener('click', function () { navigate(-1); });
+    document.getElementById('cal-next').addEventListener('click', function () { navigate(1); });
     document.getElementById('cal-today').addEventListener('click', function () {
       currentDate = new Date();
       render();
     });
     document.getElementById('cal-month-btn').addEventListener('click', function () {
-      viewMode = 'month';
-      render();
+      viewMode = 'month'; render();
     });
     document.getElementById('cal-week-btn').addEventListener('click', function () {
-      viewMode = 'week';
-      render();
+      viewMode = 'week'; render();
     });
     document.getElementById('cal-day-btn').addEventListener('click', function () {
-      viewMode = 'day';
-      render();
+      viewMode = 'day'; render();
     });
     document.getElementById('cal-add-btn').addEventListener('click', function () {
-      openScheduleModal(null, null);
+      var prefill = null;
+      if (viewMode === 'day' || viewMode === 'week') {
+        prefill = toDateStr(currentDate);
+      }
+      openScheduleModal(null, prefill);
     });
   }
 
@@ -173,13 +232,9 @@
   }
 
   function updateViewButtons() {
-    var monthBtn = document.getElementById('cal-month-btn');
-    var weekBtn = document.getElementById('cal-week-btn');
-    var dayBtn = document.getElementById('cal-day-btn');
-
-    monthBtn.className = viewMode === 'month' ? 'btn btn-primary btn-sm' : 'btn btn-sm';
-    weekBtn.className = viewMode === 'week' ? 'btn btn-primary btn-sm' : 'btn btn-sm';
-    dayBtn.className = viewMode === 'day' ? 'btn btn-primary btn-sm' : 'btn btn-sm';
+    document.getElementById('cal-month-btn').className = viewMode === 'month' ? 'btn btn-primary btn-sm' : 'btn btn-sm';
+    document.getElementById('cal-week-btn').className = viewMode === 'week' ? 'btn btn-primary btn-sm' : 'btn btn-sm';
+    document.getElementById('cal-day-btn').className = viewMode === 'day' ? 'btn btn-primary btn-sm' : 'btn btn-sm';
   }
 
   function updateSubtitle() {
@@ -211,9 +266,8 @@
     var firstDay = new Date(year, month, 1);
     var lastDay = new Date(year, month + 1, 0);
 
-    // Monday = 0 index for our grid
     var startDow = firstDay.getDay();
-    var startOffset = (startDow === 0) ? 6 : startDow - 1; // days before first of month
+    var startOffset = (startDow === 0) ? 6 : startDow - 1;
 
     var totalDays = lastDay.getDate();
     var totalCells = startOffset + totalDays;
@@ -222,12 +276,10 @@
 
     var html = '<div class="cal-month-grid">';
 
-    // Header row
     for (var h = 0; h < 7; h++) {
       html += '<div class="cal-month-header">' + DAY_NAMES[h] + '</div>';
     }
 
-    // Day cells
     for (var i = 0; i < totalSlots; i++) {
       var dayNum = i - startOffset + 1;
       var cellDate = new Date(year, month, dayNum);
@@ -238,7 +290,7 @@
       if (isOutside) classes += ' outside';
       if (isTodayCell) classes += ' today';
 
-      var dateAttr = escapeAttr(cellDate.getFullYear() + '-' + padTime(cellDate.getMonth() + 1) + '-' + padTime(cellDate.getDate()));
+      var dateAttr = escapeAttr(toDateStr(cellDate));
 
       html += '<div class="' + classes + '" data-date="' + dateAttr + '">';
       html += '<div class="cal-day-number">' + cellDate.getDate() + '</div>';
@@ -264,26 +316,24 @@
     html += '</div>';
     container.innerHTML = html;
 
-    // Bind click events
     container.addEventListener('click', function (e) {
       var pill = e.target.closest('.cal-event-pill');
       if (pill) {
-        var id = pill.getAttribute('data-id');
-        editEventById(id);
+        editEventById(pill.getAttribute('data-id'));
         return;
       }
       var moreLink = e.target.closest('.cal-more-link');
       if (moreLink) {
-        var dateStr = moreLink.getAttribute('data-date');
-        currentDate = new Date(dateStr + 'T12:00:00');
+        var ds = moreLink.getAttribute('data-date');
+        currentDate = new Date(ds + 'T12:00:00');
         viewMode = 'day';
         render();
         return;
       }
       var cell = e.target.closest('.cal-month-cell');
       if (cell && !cell.classList.contains('outside')) {
-        var cellDate = cell.getAttribute('data-date');
-        currentDate = new Date(cellDate + 'T12:00:00');
+        var cellDateStr = cell.getAttribute('data-date');
+        currentDate = new Date(cellDateStr + 'T12:00:00');
         viewMode = 'day';
         render();
       }
@@ -296,13 +346,44 @@
   function renderWeek() {
     var container = document.getElementById('cal-container');
     var monday = getMondayOfWeek(currentDate);
-    var startHour = 6;
-    var endHour = 23;
+    var startHour = 0;
+    var endHour = 24;
     var totalHours = endHour - startHour;
     var rowHeight = 48;
 
+    var html = '';
+
+    // All-day banner
+    var hasAnyAllDay = false;
+    for (var chk = 0; chk < 7; chk++) {
+      var chkDate = new Date(monday);
+      chkDate.setDate(chkDate.getDate() + chk);
+      if (getAllDayItemsForDate(chkDate).length > 0) { hasAnyAllDay = true; break; }
+    }
+
+    if (hasAnyAllDay) {
+      html += '<div class="cal-allday-section">';
+      html += '<div style="display:grid;grid-template-columns:60px repeat(7,1fr);gap:2px">';
+      html += '<div class="text-xs text-muted" style="display:flex;align-items:center;justify-content:flex-end;padding-right:var(--space-sm)">all-day</div>';
+      for (var dc = 0; dc < 7; dc++) {
+        var dcDate = new Date(monday);
+        dcDate.setDate(dcDate.getDate() + dc);
+        var dcItems = getAllDayItemsForDate(dcDate);
+        html += '<div>';
+        for (var dci = 0; dci < dcItems.length; dci++) {
+          var dcItem = dcItems[dci];
+          var dcColor = getCategoryColor(dcItem.categoryId);
+          html += '<div class="cal-event-pill" data-id="' + escapeAttr(dcItem.id) + '" ' +
+            'style="background:' + dcColor + '22;color:' + dcColor + '">' +
+            escapeHtml(dcItem.title) + '</div>';
+        }
+        html += '</div>';
+      }
+      html += '</div></div>';
+    }
+
     // Header
-    var html = '<div class="cal-week-header" style="grid-template-columns:60px repeat(7,1fr)">';
+    html += '<div class="cal-week-header" style="grid-template-columns:60px repeat(7,1fr)">';
     html += '<div class="cal-week-header-cell" style="border-right:1px solid var(--border-subtle)"></div>';
     for (var d = 0; d < 7; d++) {
       var date = new Date(monday);
@@ -316,7 +397,6 @@
     // Time grid
     html += '<div class="cal-time-grid" style="grid-template-columns:60px repeat(7,1fr);grid-template-rows:repeat(' + totalHours + ',' + rowHeight + 'px)">';
 
-    // Hour labels and rows
     for (var h = startHour; h < endHour; h++) {
       var row = h - startHour + 1;
       html += '<div class="cal-time-label" style="grid-row:' + row + ';grid-column:1">' + formatHourLabel(h) + '</div>';
@@ -326,11 +406,11 @@
       }
     }
 
-    // Event blocks
-    for (var d = 0; d < 7; d++) {
+    // Timed events
+    for (var d2 = 0; d2 < 7; d2++) {
       var dayDate = new Date(monday);
-      dayDate.setDate(dayDate.getDate() + d);
-      var items = getItemsForDate(dayDate);
+      dayDate.setDate(dayDate.getDate() + d2);
+      var items = getTimedItemsForDate(dayDate);
 
       for (var j = 0; j < items.length; j++) {
         var item = items[j];
@@ -354,7 +434,7 @@
         var timeLabel = formatTime(times.start) + ' - ' + formatTime(times.end);
 
         html += '<div class="cal-event-block" data-id="' + escapeAttr(item.id) + '" ' +
-          'style="grid-column:' + (d + 2) + ';grid-row:1/' + (totalHours + 1) + ';' +
+          'style="grid-column:' + (d2 + 2) + ';grid-row:1/' + (totalHours + 1) + ';' +
           'top:' + topPx + 'px;height:' + heightPx + 'px;' +
           'background:' + color + '22;border-left-color:' + color + ';color:' + color + '">' +
           '<div class="cal-event-block-title">' + escapeHtml(item.title) + '</div>' +
@@ -363,7 +443,7 @@
       }
     }
 
-    // Current time line
+    // Now line
     var now = new Date();
     var nowDay = -1;
     for (var nd = 0; nd < 7; nd++) {
@@ -373,9 +453,8 @@
     }
     if (nowDay >= 0) {
       var nowMin = now.getHours() * 60 + now.getMinutes();
-      var gridStart = startHour * 60;
-      if (nowMin >= gridStart && nowMin < endHour * 60) {
-        var nowTop = ((nowMin - gridStart) / 60) * rowHeight;
+      if (nowMin >= startHour * 60 && nowMin < endHour * 60) {
+        var nowTop = ((nowMin - startHour * 60) / 60) * rowHeight;
         html += '<div class="cal-now-line" style="grid-column:' + (nowDay + 2) + ';grid-row:1/' + (totalHours + 1) + ';top:' + nowTop + 'px"></div>';
       }
     }
@@ -390,14 +469,18 @@
         editEventById(block.getAttribute('data-id'));
         return;
       }
+      var pill = e.target.closest('.cal-event-pill');
+      if (pill) {
+        editEventById(pill.getAttribute('data-id'));
+        return;
+      }
       var slot = e.target.closest('.cal-day-column');
       if (slot) {
         var dayIdx = parseInt(slot.getAttribute('data-day'));
         var hour = parseInt(slot.getAttribute('data-hour'));
         var slotDate = new Date(monday);
         slotDate.setDate(slotDate.getDate() + dayIdx);
-        var dateStr = slotDate.getFullYear() + '-' + padTime(slotDate.getMonth() + 1) + '-' + padTime(slotDate.getDate());
-        openScheduleModal(null, dateStr, padTime(hour) + ':00');
+        openScheduleModal(null, toDateStr(slotDate), padTime(hour) + ':00');
       }
     });
   }
@@ -407,12 +490,30 @@
      ====================================================================== */
   function renderDay() {
     var container = document.getElementById('cal-container');
-    var startHour = 6;
-    var endHour = 23;
+    var startHour = 0;
+    var endHour = 24;
     var totalHours = endHour - startHour;
     var rowHeight = 56;
 
-    var html = '<div class="cal-time-grid" style="grid-template-columns:60px 1fr;grid-template-rows:repeat(' + totalHours + ',' + rowHeight + 'px)">';
+    var html = '';
+
+    // All-day banner
+    var allDayItems = getAllDayItemsForDate(currentDate);
+    if (allDayItems.length > 0) {
+      html += '<div class="cal-allday-section" style="padding-left:60px">';
+      html += '<span class="text-xs text-muted" style="margin-right:var(--space-sm)">all-day</span>';
+      for (var ai = 0; ai < allDayItems.length; ai++) {
+        var adItem = allDayItems[ai];
+        var adColor = getCategoryColor(adItem.categoryId);
+        html += '<span class="cal-event-pill" data-id="' + escapeAttr(adItem.id) + '" ' +
+          'style="background:' + adColor + '22;color:' + adColor + ';display:inline-block">' +
+          escapeHtml(adItem.title) + '</span> ';
+      }
+      html += '</div>';
+    }
+
+    // Time grid
+    html += '<div class="cal-time-grid" style="grid-template-columns:60px 1fr;grid-template-rows:repeat(' + totalHours + ',' + rowHeight + 'px)">';
 
     for (var h = startHour; h < endHour; h++) {
       var row = h - startHour + 1;
@@ -421,8 +522,8 @@
         'style="grid-row:' + row + ';grid-column:2"></div>';
     }
 
-    // Events
-    var items = getItemsForDate(currentDate);
+    // Timed events
+    var items = getTimedItemsForDate(currentDate);
     for (var j = 0; j < items.length; j++) {
       var item = items[j];
       var times = getItemTimes(item, currentDate);
@@ -476,11 +577,15 @@
         editEventById(block.getAttribute('data-id'));
         return;
       }
+      var pill = e.target.closest('.cal-event-pill');
+      if (pill) {
+        editEventById(pill.getAttribute('data-id'));
+        return;
+      }
       var slot = e.target.closest('.cal-day-column');
       if (slot) {
         var hour = parseInt(slot.getAttribute('data-hour'));
-        var dateStr = currentDate.getFullYear() + '-' + padTime(currentDate.getMonth() + 1) + '-' + padTime(currentDate.getDate());
-        openScheduleModal(null, dateStr, padTime(hour) + ':00');
+        openScheduleModal(null, toDateStr(currentDate), padTime(hour) + ':00');
       }
     });
   }
@@ -497,7 +602,6 @@
     }
   }
 
-  // Expose globally for onclick fallback
   window._schEdit = editEventById;
 
   /* ======================================================================
@@ -522,28 +626,64 @@
       '</label>';
     }
 
-    // Parse existing times or use prefill
-    var startDate = '', startTime = '', endTime = '';
+    // Determine flags
+    var isAllDay = item ? !!item.allDay : false;
+    var isRecurring = item ? !!item.recurring : false;
+
+    // Parse times
+    var startDate = '', endDate = '';
+    var startH12 = 9, startMin = 0, startAMPM = 'AM';
+    var endH12 = 10, endMin = 0, endAMPM = 'AM';
+
     if (item && item.startTime) {
       var st = new Date(item.startTime);
       startDate = st.getFullYear() + '-' + padTime(st.getMonth() + 1) + '-' + padTime(st.getDate());
-      startTime = padTime(st.getHours()) + ':' + padTime(st.getMinutes());
+      if (!isAllDay) {
+        var stParts = to12Hour(st.getHours(), roundMinute(st.getMinutes()));
+        startH12 = stParts.hour;
+        startMin = stParts.minute;
+        startAMPM = stParts.ampm;
+      }
     }
     if (item && item.endTime) {
       var et = new Date(item.endTime);
-      endTime = padTime(et.getHours()) + ':' + padTime(et.getMinutes());
+      endDate = et.getFullYear() + '-' + padTime(et.getMonth() + 1) + '-' + padTime(et.getDate());
+      if (!isAllDay) {
+        var etParts = to12Hour(et.getHours(), roundMinute(et.getMinutes()));
+        endH12 = etParts.hour;
+        endMin = etParts.minute;
+        endAMPM = etParts.ampm;
+      }
     }
 
-    // Prefill from calendar click
+    // Prefill from calendar context
     if (!item && prefillDate) {
       startDate = prefillDate;
+      endDate = prefillDate;
+    }
+    if (!item && !prefillDate) {
+      startDate = toDateStr(new Date());
+      endDate = toDateStr(new Date());
     }
     if (!item && prefillTime) {
-      startTime = prefillTime;
-      // Default end time to 1 hour later
-      var prefillHour = parseInt(prefillTime.split(':')[0]);
-      endTime = padTime(Math.min(prefillHour + 1, 23)) + ':00';
+      var ph = parseInt(prefillTime.split(':')[0]);
+      var pm = parseInt(prefillTime.split(':')[1]) || 0;
+      var pParts = to12Hour(ph, roundMinute(pm));
+      startH12 = pParts.hour;
+      startMin = pParts.minute;
+      startAMPM = pParts.ampm;
+      var ehour = Math.min(ph + 1, 23);
+      var eParts2 = to12Hour(ehour, 0);
+      endH12 = eParts2.hour;
+      endMin = eParts2.minute;
+      endAMPM = eParts2.ampm;
     }
+
+    if (!endDate) endDate = startDate;
+
+    // Visibility flags
+    var showDateGroup = !isAllDay && !isRecurring;
+    var showDaysGroup = !isAllDay && isRecurring;
 
     var html = '<form id="sch-form">' +
       '<div class="form-group">' +
@@ -554,30 +694,72 @@
         '<label class="form-label">Category</label>' +
         '<select id="sf-category">' + catOptions + '</select>' +
       '</div>' +
+      // All-day toggle
       '<div class="form-group">' +
+        '<label class="form-label">All Day / Multi-Day</label>' +
+        '<div class="flex gap-2 items-center">' +
+          '<label class="toggle"><input type="checkbox" id="sf-allday"' + (isAllDay ? ' checked' : '') + '>' +
+            '<span class="toggle-slider"></span></label>' +
+          '<span class="text-sm text-secondary">Spans full days (no specific times)</span>' +
+        '</div>' +
+      '</div>' +
+      // Recurring toggle
+      '<div class="form-group" id="sf-recurring-group"' + (isAllDay ? ' style="display:none"' : '') + '>' +
         '<label class="form-label">Recurring?</label>' +
         '<div class="flex gap-2 items-center">' +
-          '<label class="toggle"><input type="checkbox" id="sf-recurring"' + (item && item.recurring ? ' checked' : '') + '>' +
+          '<label class="toggle"><input type="checkbox" id="sf-recurring"' + (isRecurring ? ' checked' : '') + '>' +
             '<span class="toggle-slider"></span></label>' +
           '<span class="text-sm text-secondary">Repeat weekly</span>' +
         '</div>' +
       '</div>' +
-      '<div class="form-group" id="sf-days-group"' + (item && item.recurring ? '' : ' style="display:none"') + '>' +
+      // Recurring days
+      '<div class="form-group" id="sf-days-group"' + (showDaysGroup ? '' : ' style="display:none"') + '>' +
         '<label class="form-label">Days</label>' +
         '<div>' + dayCheckboxes + '</div>' +
       '</div>' +
-      '<div class="form-group" id="sf-date-group"' + (item && item.recurring ? ' style="display:none"' : '') + '>' +
+      // Single date (for timed, non-recurring events)
+      '<div class="form-group" id="sf-date-group"' + (showDateGroup ? '' : ' style="display:none"') + '>' +
         '<label class="form-label">Date</label>' +
         '<input type="date" id="sf-date" value="' + escapeAttr(startDate) + '">' +
       '</div>' +
-      '<div class="grid-2">' +
+      // Multi-day date range (for all-day events)
+      '<div id="sf-allday-dates"' + (isAllDay ? '' : ' style="display:none"') + '>' +
+        '<div class="grid-2">' +
+          '<div class="form-group">' +
+            '<label class="form-label">Start Date</label>' +
+            '<input type="date" id="sf-start-date" value="' + escapeAttr(startDate) + '">' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label class="form-label">End Date</label>' +
+            '<input type="date" id="sf-end-date" value="' + escapeAttr(endDate) + '">' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      // Time dropdowns (hidden when all-day)
+      '<div class="grid-2" id="sf-time-group"' + (isAllDay ? ' style="display:none"' : '') + '>' +
         '<div class="form-group">' +
           '<label class="form-label">Start Time</label>' +
-          '<input type="time" id="sf-start" value="' + escapeAttr(startTime) + '" required>' +
+          '<div class="flex gap-1">' +
+            '<select id="sf-start-hour" style="width:auto;min-width:55px">' + buildHourOptions(startH12) + '</select>' +
+            '<span class="text-secondary" style="line-height:40px;font-weight:700">:</span>' +
+            '<select id="sf-start-min" style="width:auto;min-width:60px">' + buildMinuteOptions(startMin) + '</select>' +
+            '<select id="sf-start-ampm" style="width:auto;min-width:60px">' +
+              '<option value="AM"' + (startAMPM === 'AM' ? ' selected' : '') + '>AM</option>' +
+              '<option value="PM"' + (startAMPM === 'PM' ? ' selected' : '') + '>PM</option>' +
+            '</select>' +
+          '</div>' +
         '</div>' +
         '<div class="form-group">' +
           '<label class="form-label">End Time</label>' +
-          '<input type="time" id="sf-end" value="' + escapeAttr(endTime) + '" required>' +
+          '<div class="flex gap-1">' +
+            '<select id="sf-end-hour" style="width:auto;min-width:55px">' + buildHourOptions(endH12) + '</select>' +
+            '<span class="text-secondary" style="line-height:40px;font-weight:700">:</span>' +
+            '<select id="sf-end-min" style="width:auto;min-width:60px">' + buildMinuteOptions(endMin) + '</select>' +
+            '<select id="sf-end-ampm" style="width:auto;min-width:60px">' +
+              '<option value="AM"' + (endAMPM === 'AM' ? ' selected' : '') + '>AM</option>' +
+              '<option value="PM"' + (endAMPM === 'PM' ? ' selected' : '') + '>PM</option>' +
+            '</select>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="flex gap-1" style="justify-content:flex-end">' +
@@ -589,7 +771,29 @@
 
     openModal(isEdit ? 'Edit Event' : 'Add Event', html);
 
-    // Toggle recurring fields
+    // All-day toggle handler
+    document.getElementById('sf-allday').addEventListener('change', function () {
+      var on = this.checked;
+      document.getElementById('sf-time-group').style.display = on ? 'none' : '';
+      document.getElementById('sf-allday-dates').style.display = on ? '' : 'none';
+      document.getElementById('sf-date-group').style.display = on ? 'none' : (document.getElementById('sf-recurring').checked ? 'none' : '');
+      document.getElementById('sf-recurring-group').style.display = on ? 'none' : '';
+      document.getElementById('sf-days-group').style.display = 'none';
+      if (on) {
+        document.getElementById('sf-recurring').checked = false;
+        // Sync dates
+        var d = document.getElementById('sf-date').value;
+        if (d) {
+          if (!document.getElementById('sf-start-date').value) document.getElementById('sf-start-date').value = d;
+          if (!document.getElementById('sf-end-date').value) document.getElementById('sf-end-date').value = d;
+        }
+      } else {
+        var sd = document.getElementById('sf-start-date').value;
+        if (sd) document.getElementById('sf-date').value = sd;
+      }
+    });
+
+    // Recurring toggle handler
     document.getElementById('sf-recurring').addEventListener('change', function () {
       document.getElementById('sf-days-group').style.display = this.checked ? '' : 'none';
       document.getElementById('sf-date-group').style.display = this.checked ? 'none' : '';
@@ -612,20 +816,41 @@
       var title = document.getElementById('sf-title').value.trim();
       if (!title) return;
 
+      var allDay = document.getElementById('sf-allday').checked;
       var recurring = document.getElementById('sf-recurring').checked;
       var categoryId = document.getElementById('sf-category').value;
-      var startTimeVal = document.getElementById('sf-start').value;
-      var endTimeVal = document.getElementById('sf-end').value;
-      var dateVal = document.getElementById('sf-date').value || new Date().toISOString().split('T')[0];
-
+      var startISO, endISO;
       var days = [];
-      if (recurring) {
-        var cbs = document.querySelectorAll('.sch-day-cb:checked');
-        for (var c = 0; c < cbs.length; c++) days.push(cbs[c].value);
-      }
 
-      var startISO = dateVal + 'T' + startTimeVal + ':00';
-      var endISO = dateVal + 'T' + endTimeVal + ':00';
+      if (allDay) {
+        recurring = false;
+        var sd = document.getElementById('sf-start-date').value;
+        var ed = document.getElementById('sf-end-date').value;
+        if (!sd) sd = toDateStr(new Date());
+        if (!ed) ed = sd;
+        startISO = sd + 'T00:00:00';
+        endISO = ed + 'T23:59:00';
+      } else {
+        var dateVal = document.getElementById('sf-date').value || toDateStr(new Date());
+
+        if (recurring) {
+          var cbs = document.querySelectorAll('.sch-day-cb:checked');
+          for (var c = 0; c < cbs.length; c++) days.push(cbs[c].value);
+        }
+
+        var sh = parseInt(document.getElementById('sf-start-hour').value);
+        var sm = parseInt(document.getElementById('sf-start-min').value);
+        var sap = document.getElementById('sf-start-ampm').value;
+        var s24 = to24Hour(sh, sm, sap);
+
+        var eh = parseInt(document.getElementById('sf-end-hour').value);
+        var em = parseInt(document.getElementById('sf-end-min').value);
+        var eap = document.getElementById('sf-end-ampm').value;
+        var e24 = to24Hour(eh, em, eap);
+
+        startISO = dateVal + 'T' + padTime(s24.hour) + ':' + padTime(s24.minute) + ':00';
+        endISO = dateVal + 'T' + padTime(e24.hour) + ':' + padTime(e24.minute) + ':00';
+      }
 
       if (isEdit) {
         item.title = title;
@@ -634,6 +859,7 @@
         item.days = days;
         item.startTime = startISO;
         item.endTime = endISO;
+        item.allDay = allDay;
       } else {
         schedule.push({
           id: generateId(),
@@ -642,7 +868,8 @@
           startTime: startISO,
           endTime: endISO,
           recurring: recurring,
-          days: days
+          days: days,
+          allDay: allDay
         });
       }
 

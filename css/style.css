@@ -1532,3 +1532,15 @@ textarea::placeholder {
   border-radius: 50%;
   background: var(--danger);
 }
+
+/* All-day / multi-day banner */
+.cal-allday-section {
+  padding: var(--space-sm) var(--space-sm);
+  border-bottom: 2px solid var(--border-color);
+  background: var(--bg-elevated);
+  min-height: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
