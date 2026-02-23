@@ -169,37 +169,49 @@ class EthanOSData {
   async loadData(key, defaultValue) {
     if (defaultValue === undefined) defaultValue = null;
 
-    // Always check localStorage first
+    // If offline, use localStorage only
+    if (this.offlineMode) {
+      var cached = localStorage.getItem(this._cacheKey(key));
+      if (cached !== null) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {
+          localStorage.removeItem(this._cacheKey(key));
+        }
+      }
+      return defaultValue;
+    }
+
+    // Online: try cloud first
+    try {
+      var file = await this._findFile(key);
+      if (file) {
+        var publicUrl = file.public_url || file.url;
+        if (publicUrl) {
+          var res = await fetch(publicUrl);
+          if (res.ok) {
+            var text = await res.text();
+            var parsed = JSON.parse(text);
+            localStorage.setItem(this._cacheKey(key), JSON.stringify(parsed));
+            return parsed;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[EthanOSData] loadData("' + key + '") cloud fetch failed, using cache:', err.message);
+    }
+
+    // Cloud failed or file not found — fall back to localStorage cache
     var cached = localStorage.getItem(this._cacheKey(key));
     if (cached !== null) {
       try {
         return JSON.parse(cached);
       } catch (e) {
-        // Corrupted cache, remove it
         localStorage.removeItem(this._cacheKey(key));
       }
     }
 
-    if (this.offlineMode) return defaultValue;
-
-    try {
-      var file = await this._findFile(key);
-      if (!file) return defaultValue;
-
-      var publicUrl = file.public_url || file.url;
-      if (!publicUrl) return defaultValue;
-
-      var res = await fetch(publicUrl);
-      if (!res.ok) return defaultValue;
-
-      var text = await res.text();
-      var parsed = JSON.parse(text);
-      localStorage.setItem(this._cacheKey(key), JSON.stringify(parsed));
-      return parsed;
-    } catch (err) {
-      console.warn('[EthanOSData] loadData("' + key + '") cloud fetch failed:', err.message);
-      return defaultValue;
-    }
+    return defaultValue;
   }
 
   async deleteData(key) {

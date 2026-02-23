@@ -4,7 +4,6 @@
  * Loaded on every page. Handles:
  *  - Sidebar navigation injection (buildNav)
  *  - Live clock
- *  - Sync status indicator
  *  - Modal system
  *  - Toast system
  *  - Helper functions (generateId, formatDate, formatTime, timeAgo, debounce)
@@ -118,10 +117,6 @@
         '<span id="clock"></span>' +
       '</div>' +
       '<div class="topbar-right">' +
-        '<div class="sync-status">' +
-          '<span class="sync-dot" id="sync-dot"></span>' +
-          '<span id="sync-text">Synced</span>' +
-        '</div>' +
       '</div>' +
     '</header>';
 
@@ -214,31 +209,6 @@
     tick();
     setInterval(tick, 1000);
   }
-
-  /* ========================================================================
-     SYNC STATUS INDICATOR
-     ======================================================================== */
-  function setSyncStatus(state) {
-    // state: 'synced' | 'syncing' | 'error' | 'offline'
-    var dot = document.getElementById('sync-dot');
-    var text = document.getElementById('sync-text');
-    if (!dot || !text) return;
-
-    dot.className = 'sync-dot';
-    if (state === 'syncing') {
-      dot.classList.add('syncing');
-      text.textContent = 'Syncing...';
-    } else if (state === 'error') {
-      dot.classList.add('error');
-      text.textContent = 'Sync Error';
-    } else if (state === 'offline') {
-      dot.classList.add('error');
-      text.textContent = 'Offline';
-    } else {
-      text.textContent = 'Synced';
-    }
-  }
-  window.setSyncStatus = setSyncStatus;
 
   /* ========================================================================
      MODAL SYSTEM
@@ -554,10 +524,8 @@
     // 3. Initialize data layer
     try {
       await window.EthanOSData.init();
-      setSyncStatus(window.EthanOSData.offlineMode ? 'offline' : 'synced');
     } catch (err) {
       console.warn('[shared.js] Data init failed:', err);
-      setSyncStatus('offline');
     }
 
     // 4. Create default data on first visit

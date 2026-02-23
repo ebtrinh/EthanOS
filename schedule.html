@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EthanOS — Schedule Intelligence</title>
+  <title>EthanOS — Schedule</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -11,53 +11,22 @@
   <main class="main-content" id="page-content">
     <div class="page-header flex-between">
       <div>
-        <h1 class="page-title">Schedule Intelligence</h1>
-        <p class="page-subtitle">Plan and visualize your time</p>
+        <h1 class="page-title">Schedule</h1>
+        <p class="page-subtitle" id="cal-subtitle">February 2025</p>
       </div>
       <div class="flex gap-1">
-        <button class="btn" id="view-day-btn">Day</button>
-        <button class="btn" id="view-week-btn">Week</button>
-        <button class="btn btn-primary" id="add-schedule-btn">+ Add Block</button>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="grid-stats mb-3">
-      <div class="card stat-card">
-        <div class="stat-number success" id="free-time-stat">--</div>
-        <div class="stat-label">Free Time Today</div>
-      </div>
-      <div class="card stat-card">
-        <div class="stat-number accent" id="longest-block-stat">--</div>
-        <div class="stat-label">Longest Free Block</div>
-      </div>
-      <div class="card stat-card">
-        <div class="stat-number warning" id="scheduled-hours-stat">--</div>
-        <div class="stat-label">Scheduled Hours</div>
-      </div>
-    </div>
-
-    <!-- Day View -->
-    <div id="day-view" class="card">
-      <div class="card-header">
-        <h2 class="card-title" id="day-view-title">Today</h2>
-      </div>
-      <div class="card-body" id="day-timeline" style="position:relative; min-height:680px;">
-      </div>
-    </div>
-
-    <!-- Week View (hidden by default) -->
-    <div id="week-view" class="card hidden">
-      <div class="card-header flex-between">
-        <h2 class="card-title" id="week-view-title">This Week</h2>
-        <div class="flex gap-1">
-          <button class="btn btn-sm btn-ghost" id="week-prev">&larr; Prev</button>
-          <button class="btn btn-sm btn-ghost" id="week-next">Next &rarr;</button>
+        <button class="btn btn-sm" id="cal-prev">&larr;</button>
+        <button class="btn btn-sm" id="cal-today">Today</button>
+        <button class="btn btn-sm" id="cal-next">&rarr;</button>
+        <div class="flex gap-1" style="margin-left:var(--space-md)">
+          <button class="btn btn-sm" id="cal-month-btn">Month</button>
+          <button class="btn btn-sm" id="cal-week-btn">Week</button>
+          <button class="btn btn-sm" id="cal-day-btn">Day</button>
         </div>
-      </div>
-      <div class="card-body" id="week-grid" style="overflow-x:auto;">
+        <button class="btn btn-primary btn-sm" id="cal-add-btn">+ Event</button>
       </div>
     </div>
+    <div id="cal-container" class="card" style="padding:0;overflow:hidden;"></div>
   </main>
   <div id="modal-root"></div>
   <div id="toast-container"></div>
