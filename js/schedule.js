@@ -302,7 +302,7 @@
           var item = items[j];
           var color = getCategoryColor(item.categoryId);
           html += '<div class="cal-event-pill" data-id="' + escapeAttr(item.id) + '" ' +
-            'style="background:' + color + '22;color:' + color + '">' +
+            'style="background:' + color + '">' +
             escapeHtml(item.title) + '</div>';
         }
         if (items.length > maxVisible) {
